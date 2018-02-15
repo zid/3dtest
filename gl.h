@@ -1,5 +1,9 @@
+#ifndef GL_H
+#define GL_H
+#include <windows.h>
 #include <gl/gl.h>
 #include <stddef.h>
+#include "model.h"
 
 typedef ptrdiff_t GLsizeiptr;
 typedef char GLchar;
@@ -35,7 +39,17 @@ ABI void   (*glGetShaderInfoLog)(GLuint, GLsizei, GLsizei *, GLchar *);
 ABI void   (*wglSwapIntervalEXT)(GLuint);
 ABI void   (*glGenerateMipmap)(GLenum);
 
-void init_gl_procs(void);
+struct object
+{
+	GLuint *vao, shader, *tex;
+	GLint scale, rot4vf, persp, trans;
+
+	struct model *m;
+};
+
 void rot(float *, float, float, float, float);
-char *load_txt(const char *);
-void free_txt(char *);
+void init_gl_procs(void);
+void initgl(HWND);
+void render(void);
+void load_model(struct object *, const char *);
+#endif

@@ -1,14 +1,14 @@
+#ifndef MODEL_H
+#define MODEL_H
 #include <stdint.h>
 #include "png.h"
 
-#define m2ptr(m) ((m)->ele_type == 0 ? (void *)(m)->short_elements : (void *)(m)->int_elements)
-#define mesh_ele_size(m) ((m)->ele_type ? sizeof(int) : sizeof(short))
-
+#define m2ptr(m) ((m)->ele_size == 2 ? (void *)(m)->short_elements : (void *)(m)->int_elements)
 struct mesh
 {
 	/* Mesh info */
 	uint32_t nverts, nelements;
-	int ele_type;
+	int ele_size;
 	float *verts;
 	union {
 		unsigned short *short_elements;
@@ -25,3 +25,4 @@ struct model {
 };
 
 struct model *load_bin(const char *name);
+#endif

@@ -5,43 +5,44 @@
 
 void nlog(const char *fmt, ...);
 
-#ifndef strdup
-#define strdup zstrdup
-static char *zstrdup(const char *s1)
+/*
+#ifndef HAVE_STRDUP
+static char *strdup(const char *s1)
 {
-	size_t len = strlen(s1);
+	size_t len = strlen(s1) + 1;
 	char *s2;
-	
-	s2 = malloc(len + 1);
-	strcpy(s2, s1);
+
+	s2 = malloc(len);
+	if(s2)
+		memcpy(s2, s1, len);
 
 	return s2;
 }
 #endif
-
+*/
 /* Returns the filename of the associated texture to load */
-char *load_mesh(FILE *f, struct mesh *m)
+static char *load_mesh(FILE *f, struct mesh *m)
 {
 	char texname[64];
 	size_t r;
 	size_t len;
-	
+
 	fread(texname, 1, 64, f);
-	
+
 	r = fread(&m->nverts, 1, 4, f);
 	if(r != 4)
 	{
 		nlog("load_bin: Error reading vertex count");
 		goto out1;
 	}
-	
+
 	r = fread(&m->nelements, 1, 4, f);
 	if(r != 4)
 	{
 		nlog("load_bin: Error reading element count");
 		goto out1;
 	}
-	
+
 	len = sizeof(float[8]) * m->nverts;
 
 	m->verts = malloc(len);
@@ -61,7 +62,7 @@ char *load_mesh(FILE *f, struct mesh *m)
 
 	if(m->nelements > 65535UL)
 	{
-		m->ele_type = 1;
+		m->ele_size = 4;
 		m->int_elements = malloc(sizeof(int) * m->nelements * 3);
 		if(!m->int_elements)
 		{
@@ -71,7 +72,7 @@ char *load_mesh(FILE *f, struct mesh *m)
 	}
 	else
 	{
-		m->ele_type = 0;
+		m->ele_size = 2;
 		m->short_elements = malloc(sizeof(short) * m->nelements * 3);
 		if(!m->short_elements)
 		{
@@ -80,7 +81,7 @@ char *load_mesh(FILE *f, struct mesh *m)
 		}
 	}
 
-	len = m->nelements * mesh_ele_size(m) * 3;
+	len = m->nelements * m->ele_size * 3;
 	r = fread(m2ptr(m), 1, len, f);
 	if(r != len)
 	{
@@ -106,7 +107,7 @@ struct model *load_bin(const char *name)
 	struct model *model;
 	unsigned int n, i;
 	int r;
-	
+
 	f = fopen(name, "rb");
 	if(!f)
 	{
@@ -120,7 +121,7 @@ struct model *load_bin(const char *name)
 		nlog("load_bin: No object count, file empty?");
 		goto out1;
 	}
-	
+
 	fseek(f, 32, SEEK_SET);
 
 	model = malloc(sizeof (struct model));
@@ -128,17 +129,17 @@ struct model *load_bin(const char *name)
 	{
 		nlog("load_bin: Out of memory");
 		goto out2;
-	}	
+	}
 
 	model->meshes = malloc(sizeof (struct mesh *[16]));
 	if(!model->meshes)
 	{
 		nlog("load_bin: Out of memory");
 		goto out3;
-	}	
-	
+	}
+
 	model->nmeshes = n;
-	
+
 	for(i = 0; i < n; i++)
 	{
 		char *texture_filename;
@@ -154,7 +155,7 @@ struct model *load_bin(const char *name)
 		texture_filename = load_mesh(f, model->meshes[i]);
 		if(!texture_filename)
 			return 0;
-		
+
 		model->meshes[i]->p = load_png(texture_filename);
 		free(texture_filename);
 		if(!model->meshes[i]->p.pixels)
@@ -166,9 +167,9 @@ struct model *load_bin(const char *name)
 		pos = ((pos+31)/32)*32; /* Round up to 32 for file alignment*/
 		fseek(f, pos, SEEK_SET);
 	}
-	
+
 	return model;
-	
+
 out4:
 	for(i = 0; i < n; n++)
 		if(model->meshes[i])
@@ -181,7 +182,6 @@ out2:
 	free(model);
 out1:
 	fclose(f);
-	
+
 	return NULL;
 }
-

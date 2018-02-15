@@ -13,6 +13,8 @@ struct png {
 
 void png_kill(struct png *p)
 {
+	p->w = 0;
+	p->h = 0;
 	free(p->pixels);
 }
 
@@ -23,7 +25,7 @@ struct png load_png(const char *name)
 	struct png p = {0};
 	png_structp png_ptr;
 	png_infop info_ptr;
-	unsigned char **rows = NULL;
+	unsigned char **rows;
 	int32_t depth, type;
 
 	f = fopen(name, "rb");
@@ -32,7 +34,7 @@ struct png load_png(const char *name)
 		perror("Unable to open png: %s", name);
 		goto out;
 	}
-	
+
 	if(fread(header, 1, 8, f) != 8)
 	{
 		perror("Unable to read png header");
@@ -44,28 +46,28 @@ struct png load_png(const char *name)
 		perror("Malformed png file");
 		goto out;
 	}
-	
+
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if(!png_ptr)
 	{
 		perror("Failed to init libpng");
 		goto out;
 	}
-	
+
 	info_ptr = png_create_info_struct(png_ptr);
 	if(!info_ptr)
 	{
 		perror("Failed to init libpng info struct");
 		goto out;
 	}
-	
+
 	if(setjmp(png_jmpbuf(png_ptr)))
 	{
 		perror("longjmp");
 		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 		goto out;
 	}
-	
+
 	png_init_io(png_ptr, f);
 	png_set_sig_bytes(png_ptr, 8);
 
@@ -77,7 +79,7 @@ struct png load_png(const char *name)
 		perror("Image has unsupported bitdepth");
 		goto out;
 	}
-	
+
 	if(type == PNG_COLOR_TYPE_RGB)
 		p.format = 3;
 	if(type == PNG_COLOR_TYPE_RGB_ALPHA)
@@ -88,7 +90,7 @@ struct png load_png(const char *name)
 		perror("Image is not RGB");
 		goto out;
 	}
-	
+
 	p.pixels = malloc(p.w * p.h * p.format);
 	rows = malloc(sizeof(void *) * p.h);
 	for(size_t i = 0; i < p.h; i++)
@@ -97,9 +99,10 @@ struct png load_png(const char *name)
 	png_read_image(png_ptr, rows);
 	png_read_end(png_ptr, info_ptr);
 	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	out:
+out:
 	fclose(f);
-	free(rows);
+	if(rows)
+		free(rows);
 	return p;
 }
 
@@ -110,7 +113,7 @@ int main(void)
 	p = load_png("test.png");
 	if(!p.pixels)
 		return EXIT_FAILURE;
-	
+
 	printf("Loaded the test png.\n");
 	return EXIT_SUCCESS;
 }
