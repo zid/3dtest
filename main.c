@@ -1,8 +1,8 @@
 #include <windows.h>
-//#include <stdint.h>
 #include <stdio.h>
 #include <math.h>
-#include "gl.h"
+#include "game.h"
+#include "gfx.h"
 
 extern float rotx, roty, rotz;
 
@@ -26,35 +26,11 @@ LRESULT APIENTRY mainproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch(uMsg)
 	{
 		case WM_KEYDOWN:
-			switch(wParam)
-			{
-				case 0x51:
-					rotx -= 0.05;
-				break;
-				case 0x57:
-					roty -= 0.05;
-				break;
-				case 0x45:
-					rotz -= 0.05;
-				break;
-				case 0x41:
-					rotx+= 0.05;
-				break;
-				case 0x53:
-					roty+= 0.05;
-				break;
-				case 0x44:
-					rotz+=0.05;
-				break;
-				case 0x46:
-					nlog("%f %f %f", rotx, roty, rotz);
-				break;
-			}
 		if(wParam != VK_ESCAPE)
 				break;
 		case WM_QUIT:
 		case WM_DESTROY:
-			gldestroy();
+			gfx_kill();
 			PostQuitMessage(0);
 		break;
 	}
@@ -97,7 +73,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		NULL, NULL, hInstance, NULL
 	);
 
-	initgl(hwnd);
+	gfx_init(&hwnd);
+	game_init();
 	ShowWindow(hwnd, SW_SHOW);
 	hdc = GetWindowDC(hwnd);
 
@@ -113,10 +90,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		if (msg.message == WM_QUIT)
 			break;
 
-		render();
+		game();
 
 		SwapBuffers(hdc);
 	}
+
+	game_kill();
 
 	return msg.wParam;
 }

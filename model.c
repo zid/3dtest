@@ -2,24 +2,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include "model.h"
+#include "entity-priv.h"
 
 void nlog(const char *fmt, ...);
 
-/*
-#ifndef HAVE_STRDUP
-static char *strdup(const char *s1)
+void model_kill(struct model *m)
 {
-	size_t len = strlen(s1) + 1;
-	char *s2;
+	unsigned int i;
 
-	s2 = malloc(len);
-	if(s2)
-		memcpy(s2, s1, len);
-
-	return s2;
+	for(i = 0; i < m->nmeshes; i++)
+	{
+		free(m->meshes[i]->verts);
+		free(m2ptr(m->meshes[i]));
+		free(m->meshes[i]);
+	}
+	free(m->meshes);
+	free(m);
 }
-#endif
-*/
+
 /* Returns the filename of the associated texture to load */
 static char *load_mesh(FILE *f, struct mesh *m)
 {
@@ -101,7 +101,8 @@ out1:
 	return 0;
 }
 
-struct model *load_bin(const char *name)
+/* Loads a .bin (custom pre-computed .obj file) and parses out the meshes */
+struct model *load_model(const char *name)
 {
 	FILE *f;
 	struct model *model;

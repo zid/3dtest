@@ -24,5 +24,6 @@ struct model {
 	struct mesh **meshes;
 };
 
-struct model *load_bin(const char *name);
+struct model *load_model(const char *name);
+void model_kill(struct model *);
 #endif
