@@ -10,12 +10,12 @@ uniform mat4 trans;
 uniform mat4 persp;
 
 out vec2 texcoord;
-out vec4 n;
+out vec3 n;
 
 void main(void)
 {
 	gl_Position =  persp * trans * rot * vec4(pos.xyz * scale, 1.0); 
 	texcoord = uv;
-	n = -trans * rot * vec4(norm, 0.0);
+	n = mat3(trans) * mat3(rot) * norm;
 }
 
