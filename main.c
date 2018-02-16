@@ -52,7 +52,9 @@ LRESULT APIENTRY mainproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 		if(wParam != VK_ESCAPE)
 				break;
+		case WM_QUIT:
 		case WM_DESTROY:
+			gldestroy();
 			PostQuitMessage(0);
 		break;
 	}
@@ -91,7 +93,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hwnd = CreateWindowEx(
 		WS_EX_WINDOWEDGE, "gl", "gl",
 		WS_CLIPCHILDREN | WS_SYSMENU,
-		100, 100, 640, 480,
+		100, 100, 1920, 1080,
 		NULL, NULL, hInstance, NULL
 	);
 

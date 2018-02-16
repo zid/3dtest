@@ -5,6 +5,8 @@
 
 void nlog(const char *fmt, ...);
 
+static HGLRC gl;
+
 float rotx = 0, roty = 0, rotz = 0;
 
 static const float persp_mat[] = {
@@ -184,17 +186,18 @@ void load_model(struct object *o, const char *binpath)
 
 	for(i = 0; i < n; i++)
 	{
+		GLint format;
+		GLsizeiptr data_size;
+
 		p = &o->m->meshes[i]->p;
 		glBindTexture(GL_TEXTURE_2D, o->tex[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, p->w, p->h, 0, p->format == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, p->pixels);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR); 
+		format = p->format == 4 ? GL_RGBA : GL_RGB;
+		glTexImage2D(GL_TEXTURE_2D, 0, format, p->w, p->h, 0, format, GL_UNSIGNED_BYTE, p->pixels);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glBindVertexArray(o->vao[i]);
 
 		glGenBuffers(2, vbo);
-
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float[8]) * o->m->meshes[i]->nverts, o->m->meshes[i]->verts, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
@@ -205,12 +208,16 @@ void load_model(struct object *o, const char *binpath)
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat[8]), (GLvoid *)(sizeof(GLfloat[6])));
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-			o->m->meshes[i]->ele_size * 3 * o->m->meshes[i]->nelements, 
-			m2ptr(o->m->meshes[i]), GL_STATIC_DRAW);
+		data_size = o->m->meshes[i]->ele_size * o->m->meshes[i]->nelements * 3;
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, data_size, m2ptr(o->m->meshes[i]), GL_STATIC_DRAW);
 
 		png_kill(p);
 	}
+}
+
+void gldestroy(void)
+{
+	wglDeleteContext(gl);
 }
 
 void initgl(HWND hwnd)
@@ -219,11 +226,9 @@ void initgl(HWND hwnd)
 	static GLchar *fshade_src;
 	GLuint shader, vshade, fshade;
 	struct object *o;
-
 	HDC h;
-	HGLRC gl;
 	int nformat;
-	
+
 	PIXELFORMATDESCRIPTOR pfd = {
 		sizeof(PIXELFORMATDESCRIPTOR),
 		1,
@@ -288,14 +293,4 @@ void initgl(HWND hwnd)
 	o->persp  = glGetUniformLocation(shader, "persp");
 	o->trans  = glGetUniformLocation(shader, "trans");
 	o->shader = shader;
-	
-/*	o = &model[CUBE];
-	o->m = load_model("box.bin");
-	
-	o->scale  = glGetUniformLocation(shader, "scale");
-	o->rot4vf = glGetUniformLocation(shader, "rot");
-	o->persp  = glGetUniformLocation(shader, "persp");
-	o->trans  = glGetUniformLocation(shader, "trans");
-	o->shader = shader;
-*/
 }

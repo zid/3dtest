@@ -50,6 +50,7 @@ struct object
 void rot(float *, float, float, float, float);
 void init_gl_procs(void);
 void initgl(HWND);
+void gldestroy(void);
 void render(void);
 void load_model(struct object *, const char *);
 #endif
