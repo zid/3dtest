@@ -27,6 +27,7 @@ struct png load_png(const char *name)
 	png_infop info_ptr;
 	unsigned char **rows;
 	int32_t depth, type;
+	size_t i;
 
 	f = fopen(name, "rb");
 	if(!f)
@@ -93,7 +94,7 @@ struct png load_png(const char *name)
 
 	p.pixels = malloc(p.w * p.h * p.format);
 	rows = malloc(sizeof(void *) * p.h);
-	for(size_t i = 0; i < p.h; i++)
+	for(i = 0; i < p.h; i++)
 		rows[p.h-i-1] = &((unsigned char *)p.pixels)[p.w * p.format * i];
 
 	png_read_image(png_ptr, rows);

@@ -46,8 +46,8 @@ void gfx_clear(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void gfx_init(void *hwnd)
+void gfx_init()
 {
-	gl_init(hwnd);
+	gl_init();
 	persp = gl_get_uniform("persp");
 }
